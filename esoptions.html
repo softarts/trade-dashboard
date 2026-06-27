@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ES 期权分析工具</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f6f3; --bg3: #f0efe9;
+    --text: #1a1a18; --text2: #6b6a65; --text3: #9e9d97;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --accent: #185fa5; --accent-bg: #e6f1fb;
+    --danger: #a32d2d; --danger-bg: #fcebeb;
+    --success: #0f6e56; --success-bg: #e1f5ee;
+    --warn: #854f0b; --warn-bg: #faeeda;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c; --bg2: #2a2a27; --bg3: #323230;
+      --text: #e8e7e0; --text2: #a09f98; --text3: #6b6a65;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --accent: #85b7eb; --accent-bg: #0c447c;
+      --danger: #f09595; --danger-bg: #501313;
+      --success: #5dcaa5; --success-bg: #04342c;
+      --warn: #ef9f27; --warn-bg: #412402;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 15px; line-height: 1.6; padding: 24px 16px; min-height: 100vh; }
+  .container { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 540px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  label { font-size: 12px; color: var(--text2); }
+  input[type=number] {
+    background: var(--bg2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 8px 10px;
+    font-size: 14px; color: var(--text); width: 100%;
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--accent); }
+  .field-note { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .severity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .severity-btn {
+    border: 1.5px solid var(--border2); border-radius: var(--radius);
+    padding: 12px 10px; cursor: pointer; background: var(--bg);
+    text-align: center; transition: all 0.15s; user-select: none;
+  }
+  .severity-btn:hover { background: var(--bg2); }
+  .severity-btn.active-mild { border-color: #0f6e56; background: var(--success-bg); }
+  .severity-btn.active-medium { border-color: #854f0b; background: var(--warn-bg); }
+  .severity-btn.active-severe { border-color: #a32d2d; background: var(--danger-bg); }
+  .sev-icon { font-size: 20px; margin-bottom: 4px; }
+  .sev-label { font-size: 13px; font-weight: 500; }
+  .sev-desc { font-size: 11px; color: var(--text2); margin-top: 2px; line-height: 1.4; }
+  .btn-primary {
+    background: var(--accent-bg); border: 1px solid var(--accent);
+    color: var(--accent); border-radius: var(--radius-sm);
+    padding: 10px 20px; font-size: 14px; font-weight: 500;
+    cursor: pointer; width: 100%; transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.8; }
+  .results { display: none; }
+  .results.show { display: block; }
+  .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 14px; }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-label { color: var(--text2); }
+  .metric-value { font-weight: 500; }
+  .metric-value.up { color: var(--danger); }
+  .metric-value.down { color: var(--success); }
+  .metric-value.neutral { color: var(--accent); }
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .scenario-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px; border: 0.5px solid var(--border); }
+  .sc-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .sc-es { font-size: 13px; font-weight: 500; color: var(--text); margin: 2px 0; }
+  .sc-put { font-size: 22px; font-weight: 500; }
+  .sc-put.green { color: var(--success); }
+  .sc-put.orange { color: var(--warn); }
+  .sc-put.red { color: var(--danger); }
+  .sc-contrib { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
+  .sc-hint { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .path-box { background: var(--bg2); border-radius: var(--radius-sm); padding: 14px; border-left: 3px solid var(--accent); }
+  .path-step { font-size: 13px; padding: 3px 0; color: var(--text); }
+  .signal-row { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; font-size: 13px; }
+  .signal-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .dot-danger { background: var(--danger); }
+  .dot-warn { background: var(--warn); }
+  .dot-success { background: var(--success); }
+  .dot-neutral { background: var(--accent); }
+  .order-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .order-table th { text-align: left; padding: 6px 8px; font-size: 11px; font-weight: 500; color: var(--text2); border-bottom: 0.5px solid var(--border); }
+  .order-table td { padding: 8px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+  .order-table tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .tag-sell { background: var(--danger-bg); color: var(--danger); }
+  .tag-close { background: var(--success-bg); color: var(--success); }
+  .tag-stop { background: var(--accent-bg); color: var(--accent); }
+  .divider { height: 0.5px; background: var(--border); margin: 12px 0; }
+  .section-h { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .debug-box {
+    background: var(--bg2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    color: var(--text2); white-space: pre-wrap; line-height: 1.8;
+  }
+  .copy-btn {
+    background: var(--bg2); border: 0.5px solid var(--border2);
+    color: var(--text2); border-radius: var(--radius-sm);
+    padding: 6px 14px; font-size: 12px; cursor: pointer;
+    float: right; margin-bottom: 8px; transition: background 0.15s;
+  }
+  .copy-btn:hover { background: var(--bg3); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ES 期权分析工具</h1>
+  <p class="subtitle">Sell Put 策略 · 路径预测 · 挂单价格计算</p>
+
+  <!-- 市场数据 -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-chart-candle"></i> 当前市场数据</div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="field">
+        <label>ES 现价</label>
+        <input type="number" id="es_price" value="7397" step="1">
+      </div>
+      <div class="field">
+        <label>VIX 现值</label>
+        <input type="number" id="vix" value="18.41" step="0.01">
+      </div>
+      <div class="field">
+        <label>VIX 今日变化 %</label>
+        <input type="number" id="vix_chg" value="-2.54" step="0.01">
+        <span class="field-note">正值=升，负值=跌</span>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>近期低点（本轮下跌最低）</label>
+        <input type="number" id="es_low" value="7247" step="1">
+        <span class="field-note">用于估算探底目标</span>
+      </div>
+      <div class="field">
+        <label>近期高点（本轮反弹天花板）</label>
+        <input type="number" id="es_recent_high" value="7531" step="1">
+        <span class="field-note">用于估算反弹阻力位</span>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="field">
+        <label>Put Strike</label>
+        <input type="number" id="strike" value="6850" step="10">
+      </div>
+      <div class="field">
+        <label>Put 现价（元）</label>
+        <input type="number" id="put_price" value="11.7" step="0.1">
+      </div>
+      <div class="field">
+        <label>Put 成本（元）</label>
+        <input type="number" id="put_cost" value="11.4" step="0.1">
+      </div>
+    </div>
+  </div>
+
+  <!-- Greeks -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-math"></i> 期权 Greeks</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Delta（正值，如 0.065）</label>
+        <input type="number" id="delta" value="0.065" step="0.001">
+        <span class="field-note">ES每涨1点，put跌Delta元</span>
+      </div>
+      <div class="field">
+        <label>Vega</label>
+        <input type="number" id="vega" value="2.281" step="0.01">
+        <span class="field-note">VIX每升1点，put涨Vega元</span>
+      </div>
+      <div class="field">
+        <label>Theta（每日，输入绝对值）</label>
+        <input type="number" id="theta" value="1.302" step="0.01">
+        <span class="field-note">每天自动扣减此金额</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 下跌性质 -->
+  <div class="card">
+    <div class="card-title"><i class="ti ti-mood-sad"></i> 下跌性质</div>
+    <div class="severity-grid">
+      <div class="severity-btn" id="btn-mild" onclick="setSeverity('mild')">
+        <div class="sev-icon">📉</div>
+        <div class="sev-label" style="color:var(--success)">轻度回调</div>
+        <div class="sev-desc">获利回吐、非农、CPI<br>单日跌 1–3%</div>
+      </div>
+      <div class="severity-btn" id="btn-medium" onclick="setSeverity('medium')">
+        <div class="sev-icon">⚠️</div>
+        <div class="sev-label" style="color:var(--warn)">中度冲击</div>
+        <div class="sev-desc">地缘事件、债务危机<br>多日累计跌 3–5%</div>
+      </div>
+      <div class="severity-btn" id="btn-severe" onclick="setSeverity('severe')">
+        <div class="sev-icon">🔥</div>
+        <div class="sev-label" style="color:var(--danger)">重度危机</div>
+        <div class="sev-desc">关税战、股市熔断<br>单日跌 5%+</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" onclick="analyze()">
+    <i class="ti ti-calculator"></i> 生成分析
+  </button>
+
+  <div class="results" id="results">
+
+    <!-- 持仓状态 -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title"><i class="ti ti-target"></i> 当前持仓状态</div>
+      <div class="metric-row"><span class="metric-label">Buffer（ES - Strike）</span><span class="metric-value neutral" id="r_buffer">—</span></div>
+      <div class="metric-row"><span class="metric-label">Buffer %</span><span class="metric-value neutral" id="r_buffer_pct">—</span></div>
+      <div class="metric-row"><span class="metric-label">持仓盈亏</span><span class="metric-value" id="r_pnl">—</span></div>
+      <div class="metric-row"><span class="metric-label">安全评估</span><span class="metric-value" id="r_safety">—</span></div>
+    </div>
+
+    <!-- 反弹路径 -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-trending-up"></i> 反弹路径预测</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+        ES上涨 → Delta贡献为负（put跌）；VIX回落 → Vega贡献为负（put跌）<br>
+        反弹时put价格下跌，是<strong>平仓/减仓</strong>的窗口
+      </p>
+      <div class="scenario-grid" id="r_bounce_scenarios"></div>
+      <div class="divider"></div>
+      <div class="section-h"><i class="ti ti-door-exit"></i> 平仓信号</div>
+      <div id="r_close_signals"></div>
+    </div>
+
+    <!-- 探底路径 -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-trending-down"></i> 探底路径 · Sell 挂单参考</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+        ES下跌 → Delta贡献为正（put涨）；VIX上升 → Vega贡献为正（put涨）<br>
+        探底时put价格上涨，是<strong>新 Sell 开仓</strong>的窗口，鱼越跌越肥
+      </p>
+      <div class="scenario-grid" id="r_drop_scenarios" style="margin-bottom:14px"></div>
+      <div class="divider"></div>
+      <div class="section-h"><i class="ti ti-alert-triangle"></i> 风险触发规则</div>
+      <div id="r_risk_signals"></div>
+    </div>
+
+    <!-- 挂单建议 -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-list-check"></i> 建议挂单</div>
+      <table class="order-table">
+        <thead>
+          <tr><th>方向</th><th>触发条件</th><th>挂单价格</th><th>逻辑</th></tr>
+        </thead>
+        <tbody id="r_orders"></tbody>
+      </table>
+    </div>
+
+    <!-- 路径叙述 -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-map"></i> 预期路径</div>
+      <div class="path-box" id="r_path"></div>
+      <p style="font-size:12px;color:var(--text3);margin-top:10px;text-align:center">VIX 变动估算误差 ±1–2 点，put 价格误差约 ±2–4 元</p>
+    </div>
+
+    <!-- Debug -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-code"></i> Debug 输出</div>
+      <button class="copy-btn" onclick="copyDebug()"><i class="ti ti-copy"></i> 复制全部</button>
+      <div style="clear:both;margin-bottom:8px"></div>
+      <div class="debug-box" id="r_debug"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let severity = 'mild';
+
+function setSeverity(s) {
+  severity = s;
+  ['mild','medium','severe'].forEach(v => {
+    document.getElementById('btn-'+v).className = 'severity-btn' + (v===s ? ' active-'+v : '');
+  });
+}
+setSeverity('mild');
+
+function copyDebug() {
+  navigator.clipboard.writeText(document.getElementById('r_debug').textContent).then(() => {
+    const b = document.querySelector('.copy-btn');
+    b.textContent = '已复制 ✓';
+    setTimeout(() => { b.innerHTML = '<i class="ti ti-copy"></i> 复制全部'; }, 2000);
+  });
+}
+
+// 核心公式：put 价格变化
+// ES上涨时 esChange > 0，put是看跌期权，应该下跌，所以 -delta * esChange
+// ES下跌时 esChange < 0，put上涨，-delta * esChange 仍然正确（负负得正）
+// VIX上涨时 vixChange > 0，put上涨，+vega * vixChange
+// Theta每天扣减，统一输入正值，公式里减去
+function calcPut(basePut, esChange, vixChange, delta, vega, theta, days) {
+  const d = -delta * esChange;         // ES涨→put跌（负），ES跌→put涨（正）
+  const v = vega * vixChange;          // VIX涨→put涨（正），VIX跌→put跌（负）
+  const t = theta * (days || 1);       // 时间衰减，每天扣减
+  return { put: Math.max(0.5, basePut + d + v - t), dContrib: d, vContrib: v, tContrib: t };
+}
+
+// 反弹时VIX的估算变化：ES涨幅越大，VIX回落越多
+// 经验比例：ES每涨1%，VIX约跌5–8%（绝对值约1–2点）
+function bounceVixChange(esChange, currentVix, sevKey) {
+  const pct = esChange / 7400; // 涨幅比例
+  const factor = { mild: 0.4, medium: 0.5, severe: 0.6 }[sevKey];
+  return -(pct * currentVix * factor);
+}
+
+// 探底时VIX的估算变化
+function dropVixChange(dropPct, vixRiseMap) {
+  return vixRiseMap;
+}
+
+function analyze() {
+  const es       = +document.getElementById('es_price').value;
+  const vix      = +document.getElementById('vix').value;
+  const vixChg   = +document.getElementById('vix_chg').value;
+  const esLow    = +document.getElementById('es_low').value;
+  const esHigh   = +document.getElementById('es_recent_high').value;
+  const strike   = +document.getElementById('strike').value;
+  const put      = +document.getElementById('put_price').value;
+  const cost     = +document.getElementById('put_cost').value;
+  const delta    = +document.getElementById('delta').value;
+  const vega     = +document.getElementById('vega').value;
+  const theta    = +document.getElementById('theta').value; // 输入正值
+
+  const dbg = [];
+  dbg.push('=== 输入参数 ===');
+  dbg.push(`ES现价: ${es}  VIX: ${vix} (今日${vixChg>0?'+':''}${vixChg}%)`);
+  dbg.push(`近期低点: ${esLow}  近期高点: ${esHigh}`);
+  dbg.push(`Strike: ${strike}  Put现价: ${put}  成本: ${cost}`);
+  dbg.push(`Delta: ${delta}  Vega: ${vega}  Theta: ${theta}（每日，正值）`);
+  dbg.push(`下跌性质: ${severity}`);
+  dbg.push('');
+  dbg.push('=== 公式说明 ===');
+  dbg.push('Put变化 = -Delta × ES变化 + Vega × VIX变化 - Theta × 天数');
+  dbg.push('ES上涨(+)→ -Delta×(+) → put跌 ✓');
+  dbg.push('ES下跌(-)→ -Delta×(-) → put涨 ✓');
+  dbg.push('VIX上涨(+)→ Vega×(+) → put涨 ✓');
+  dbg.push('VIX下跌(-)→ Vega×(-) → put跌 ✓');
+  dbg.push('');
+
+  // 持仓状态
+  const buffer = es - strike;
+  const bufferPct = (buffer / es * 100).toFixed(1);
+  const pnl = cost - put;
+  document.getElementById('r_buffer').textContent = buffer.toFixed(0) + ' 点';
+  document.getElementById('r_buffer_pct').textContent = bufferPct + '%';
+  const pnlEl = document.getElementById('r_pnl');
+  if (pnl >= 0) { pnlEl.textContent = `盈利 ${pnl.toFixed(1)} 元/张`; pnlEl.className = 'metric-value down'; }
+  else { pnlEl.textContent = `浮亏 ${Math.abs(pnl).toFixed(1)} 元/张`; pnlEl.className = 'metric-value up'; }
+  const safeEl = document.getElementById('r_safety');
+  if (buffer/es > 0.08) { safeEl.textContent='充足 ✓'; safeEl.className='metric-value down'; }
+  else if (buffer/es > 0.05) { safeEl.textContent='合理，需关注'; safeEl.className='metric-value neutral'; }
+  else if (buffer/es > 0.03) { safeEl.textContent='偏紧，考虑 roll'; safeEl.className='metric-value up'; }
+  else { safeEl.textContent='危险，立即处理'; safeEl.className='metric-value up'; }
+
+  dbg.push('=== 持仓状态 ===');
+  dbg.push(`Buffer: ${buffer.toFixed(0)}点 (${bufferPct}%)`);
+  dbg.push(`盈亏: ${pnl>=0?'盈利':'浮亏'} ${Math.abs(pnl).toFixed(1)}元/张`);
+  dbg.push('');
+
+  // 反弹路径：从ES现价到近期高点的斐波那契位
+  const totalSwing = esHigh - esLow;
+  const bounce38  = Math.round(esLow + totalSwing * 0.382);
+  const bounce50  = Math.round(esLow + totalSwing * 0.5);
+  const bounce618 = Math.round(esLow + totalSwing * 0.618);
+
+  dbg.push('=== 反弹路径计算 ===');
+  dbg.push(`近期低点: ${esLow}  近期高点: ${esHigh}  总波幅: ${totalSwing}点`);
+  dbg.push(`38.2% 反弹目标: ${esLow} + ${totalSwing} × 0.382 = ${bounce38}`);
+  dbg.push(`50%   反弹目标: ${esLow} + ${totalSwing} × 0.5   = ${bounce50}`);
+  dbg.push(`61.8% 反弹目标: ${esLow} + ${totalSwing} × 0.618 = ${bounce618}`);
+  dbg.push('');
+  dbg.push('=== 反弹时 Put 价格估算 ===');
+  dbg.push('反弹: ES上涨 → -Delta×(+esChange) 为负 → put价格下跌');
+  dbg.push('');
+
+  const bounceTargets = [
+    { label: '弱反弹 38.2%', prob: '30%', targetES: bounce38 },
+    { label: '标准反弹 50%', prob: '40%', targetES: bounce50 },
+    { label: '强反弹 61.8%', prob: '30%', targetES: bounce618 },
+  ];
+
+  const bouncePuts = [];
+  const bounceEl = document.getElementById('r_bounce_scenarios');
+  bounceEl.innerHTML = '';
+
+  bounceTargets.forEach((sc, i) => {
+    const esChange = sc.targetES - es; // 正值=ES涨
+    const vixChange = bounceVixChange(esChange, vix, severity);
+    const r = calcPut(put, esChange, vixChange, delta, vega, theta, 1);
+    bouncePuts.push(r.put);
+
+    dbg.push(`[${sc.label}]`);
+    dbg.push(`  ES: ${es} → ${sc.targetES}  变化: ${esChange>=0?'+':''}${esChange}点`);
+    dbg.push(`  Delta贡献: -${delta} × ${esChange} = ${r.dContrib.toFixed(2)}元  (负=put跌)`);
+    dbg.push(`  VIX估算变化: ${vixChange.toFixed(2)}点 → VIX约${(vix+vixChange).toFixed(1)}`);
+    dbg.push(`  Vega贡献: ${vega} × ${vixChange.toFixed(2)} = ${r.vContrib.toFixed(2)}元`);
+    dbg.push(`  Theta扣减: -${r.tContrib.toFixed(2)}元`);
+    dbg.push(`  Put估算: ${put} + (${r.dContrib.toFixed(2)}) + (${r.vContrib.toFixed(2)}) - ${r.tContrib.toFixed(2)} = ${r.put.toFixed(1)}元`);
+    dbg.push('');
+
+    const div = document.createElement('div');
+    div.className = 'scenario-card';
+    div.innerHTML = `
+      <div class="sc-label">${sc.label} · ${sc.prob}</div>
+      <div class="sc-es">ES ${sc.targetES.toLocaleString()}</div>
+      <div class="sc-put green">${r.put.toFixed(1)} 元</div>
+      <div class="sc-contrib">Delta: ${r.dContrib.toFixed(1)} | Vega: ${r.vContrib.toFixed(1)} | θ: -${r.tContrib.toFixed(1)}</div>
+      <div class="sc-hint">↑反弹→put跌→平仓参考</div>
+    `;
+    bounceEl.appendChild(div);
+  });
+
+  const closeEl = document.getElementById('r_close_signals');
+  closeEl.innerHTML = '';
+  [
+    { c:'dot-success', t:`VIX 回落至 ${(vix*0.85).toFixed(1)} 以下：Vega压缩，put自然下跌，减仓窗口` },
+    { c:'dot-success', t:`ES 反弹至 ${bounce50}–${bounce618}（50–61.8%回撤）：阻力区，开始分批平仓` },
+    { c:'dot-neutral', t:`K线出现上影线 + 成交量萎缩：反弹被压制，抓紧平仓` },
+    { c:'dot-neutral', t:`Delta 跌至 0.01 以下：期权接近归零，低价平仓或持有到期` },
+  ].forEach(s => {
+    const d = document.createElement('div');
+    d.className = 'signal-row';
+    d.innerHTML = `<div class="signal-dot ${s.c}"></div><div>${s.t}</div>`;
+    closeEl.appendChild(d);
+  });
+
+  // 探底路径
+  const dropConfig = {
+    mild:   { pcts:[0.01,0.02,0.03], vixRises:[1.0,2.5,4.0], labels:['小幅回调 1%','标准回调 2%','偏大回调 3%'] },
+    medium: { pcts:[0.02,0.035,0.05], vixRises:[3.0,5.0,8.0], labels:['初段下跌 2%','中段下跌 3.5%','深度下跌 5%'] },
+    severe: { pcts:[0.04,0.065,0.09], vixRises:[8.0,13.0,20.0], labels:['急跌 4%','重跌 6.5%','熔断级 9%'] },
+  }[severity];
+
+  dbg.push('=== 探底路径计算（Sell 挂单参考）===');
+  dbg.push('下跌: ES下跌 → -Delta×(-esChange) 为正 → put价格上涨');
+  dbg.push('');
+
+  const dropEl = document.getElementById('r_drop_scenarios');
+  dropEl.innerHTML = '';
+  const dropPuts = [], dropESTargets = [];
+  const dropColors = ['green','orange','red'];
+
+  dropConfig.pcts.forEach((pct, i) => {
+    const targetES = Math.round(es * (1 - pct));
+    const esChange = targetES - es; // 负值
+    const vixChange = dropConfig.vixRises[i]; // 正值
+    const days = i + 1;
+    const r = calcPut(put, esChange, vixChange, delta, vega, theta, days);
+    dropPuts.push(r.put);
+    dropESTargets.push(targetES);
+
+    dbg.push(`[${dropConfig.labels[i]}]`);
+    dbg.push(`  ES: ${es} → ${targetES}  下跌: ${Math.abs(esChange)}点 (${(pct*100).toFixed(0)}%)`);
+    dbg.push(`  Delta贡献: -${delta} × ${esChange} = +${r.dContrib.toFixed(2)}元  (正=put涨)`);
+    dbg.push(`  VIX估算升: +${vixChange}点 → VIX约${(vix+vixChange).toFixed(1)}`);
+    dbg.push(`  Vega贡献: ${vega} × ${vixChange} = +${r.vContrib.toFixed(2)}元`);
+    dbg.push(`  Theta扣减: -${r.tContrib.toFixed(2)}元 (${days}天)`);
+    dbg.push(`  Put估算: ${put} + ${r.dContrib.toFixed(2)} + ${r.vContrib.toFixed(2)} - ${r.tContrib.toFixed(2)} = ${r.put.toFixed(1)}元`);
+    dbg.push('');
+
+    const div = document.createElement('div');
+    div.className = 'scenario-card';
+    div.innerHTML = `
+      <div class="sc-label">${dropConfig.labels[i]}</div>
+      <div class="sc-es">ES ${targetES.toLocaleString()}</div>
+      <div class="sc-put ${dropColors[i]}">${r.put.toFixed(0)} 元</div>
+      <div class="sc-contrib">Delta: +${r.dContrib.toFixed(1)} | Vega: +${r.vContrib.toFixed(1)} | θ: -${r.tContrib.toFixed(1)}</div>
+      <div class="sc-hint">↓探底→put涨→Sell 参考</div>
+    `;
+    dropEl.appendChild(div);
+  });
+
+  const riskEl = document.getElementById('r_risk_signals');
+  riskEl.innerHTML = '';
+  [
+    { c:'dot-warn',    t:`ES 跌破 ${Math.round(es*0.975)}（跌2.5%）：Buffer收窄，评估是否 roll 1张` },
+    { c:'dot-danger',  t:'VIX 突破 25：触发减仓，仓位压至 5 张以内' },
+    { c:'dot-danger',  t:'VIX 突破 35：极端危机，仓位压至 3 张，停止加仓' },
+    { c:'dot-neutral', t:'到期前 7 天还有浮亏：主动 roll，不硬扛到期' },
+  ].forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'signal-row';
+    d.innerHTML = `<div class="signal-dot ${r.c}"></div><div>${r.t}</div>`;
+    riskEl.appendChild(d);
+  });
+
+  // 挂单建议
+  const ordersEl = document.getElementById('r_orders');
+  ordersEl.innerHTML = '';
+  const closePriceRef = bouncePuts[1].toFixed(1);
+  const stopLoss = (put * 2.5).toFixed(0);
+
+  [
+    { tag:'tag-close', tagT:'平仓', cond:`ES反弹至 ${bounce50}–${bounce618}`, price:`约 ${closePriceRef} 元`, logic:'反弹减仓，锁利润' },
+    { tag:'tag-sell',  tagT:'Sell', cond:`ES跌至 ${dropESTargets[0]}（-${(dropConfig.pcts[0]*100).toFixed(0)}%）`, price:`约 ${dropPuts[0].toFixed(0)} 元`, logic:'轻度恐慌开仓' },
+    { tag:'tag-sell',  tagT:'Sell', cond:`ES跌至 ${dropESTargets[1]}（-${(dropConfig.pcts[1]*100).toFixed(0)}%）`, price:`约 ${dropPuts[1].toFixed(0)} 元`, logic:'深度恐慌，鱼更肥' },
+    { tag:'tag-stop',  tagT:'止损', cond:`Put涨破 ${stopLoss} 元`, price:`${stopLoss} 元`, logic:'浮亏超成本2.5×' },
+  ].forEach(o => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><span class="tag ${o.tag}">${o.tagT}</span></td><td style="color:var(--text2)">${o.cond}</td><td style="font-weight:500">${o.price}</td><td style="color:var(--text2);font-size:12px">${o.logic}</td>`;
+    ordersEl.appendChild(tr);
+  });
+
+  // 路径叙述
+  const pathTexts = {
+    mild: [
+      `① ES ${es}，轻度回调环境，VIX ${vix}`,
+      `② 预期反弹至 ${bounce50}–${bounce618}，put从 ${put} 跌至约 ${closePriceRef} 元 → 平仓窗口`,
+      `③ 反弹遇压，K线出现上影线后再次回调`,
+      `④ ES 跌至 ${dropESTargets[0]}–${dropESTargets[1]}，put 升至 ${dropPuts[0].toFixed(0)}–${dropPuts[1].toFixed(0)} 元 → Sell 开仓`,
+    ],
+    medium: [
+      `① ES ${es}，中度冲击，VIX ${vix}，恐慌情绪升温`,
+      `② 反弹力度弱，最多到 ${bounce38}–${bounce50}，put 小幅回落至约 ${bouncePuts[0].toFixed(1)} 元`,
+      `③ 二次探底测试或突破前低 ${esLow}，ES目标 ${dropESTargets[1]}`,
+      `④ Put 升至 ${dropPuts[1].toFixed(0)} 元 → 最佳 Sell 窗口`,
+    ],
+    severe: [
+      `① ES ${es}，系统性危机，VIX ${vix} 并持续升高`,
+      `② 反弹极为有限，不要轻易在反弹时平仓`,
+      `③ 持续寻底，ES 目标 ${dropESTargets[2]}，put 可能到 ${dropPuts[2].toFixed(0)} 元+`,
+      `④ VIX 触顶回落时分批 Sell，收最厚权利金`,
+      `⑤ 严格执行 VIX>25 减仓至 5 张规则`,
+    ],
+  }[severity];
+
+  document.getElementById('r_path').innerHTML = pathTexts.map(t => `<div class="path-step">${t}</div>`).join('');
+
+  dbg.push('=== 建议挂单汇总 ===');
+  dbg.push(`平仓参考: ${closePriceRef}元（ES反弹至${bounce50}–${bounce618}）`);
+  dbg.push(`Sell挂单1: ${dropPuts[0].toFixed(0)}元（ES跌至${dropESTargets[0]}）`);
+  dbg.push(`Sell挂单2: ${dropPuts[1].toFixed(0)}元（ES跌至${dropESTargets[1]}）`);
+  dbg.push(`止损线: ${stopLoss}元`);
+
+  document.getElementById('r_debug').textContent = dbg.join('\n');
+  document.getElementById('results').className = 'results show';
+}
+</script>
+</body>
+</html>
