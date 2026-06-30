@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投资策略手册</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a18;
+    --paper: #f5f0e8;
+    --accent: #c8410a;
+    --gold: #b5860d;
+    --muted: #6b6558;
+    --rule: #d4cfc4;
+    --green: #2a6b3c;
+    --red: #b5200d;
+    --blue: #1a4a7a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 300;
+    line-height: 1.8;
+    padding: 40px 20px 80px;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .masthead {
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 24px 0 20px;
+    margin-bottom: 48px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 16px;
+  }
+
+  .masthead-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .masthead h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 44px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .masthead-meta {
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+
+  /* Allocation bar */
+  .alloc-section {
+    margin-bottom: 48px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .alloc-bar {
+    display: flex;
+    height: 36px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .alloc-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: white;
+    letter-spacing: 0.05em;
+    transition: all 0.3s;
+    cursor: default;
+    position: relative;
+  }
+
+  .alloc-seg:hover { filter: brightness(1.1); }
+  .seg-csi { background: var(--accent); flex: 35; }
+  .seg-bond { background: var(--blue); flex: 55; }
+  .seg-cash { background: var(--gold); flex: 10; color: var(--ink); }
+
+  .alloc-legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Core rules */
+  .rules-grid {
+    display: grid;
+    gap: 0;
+    margin-bottom: 48px;
+  }
+
+  .rule-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    border-bottom: 1px solid var(--rule);
+    padding: 18px 0;
+    gap: 24px;
+  }
+
+  .rule-row:first-child { border-top: 1px solid var(--rule); }
+
+  .rule-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-top: 2px;
+  }
+
+  .rule-val {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .rule-val strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Trigger table */
+  .trigger-section { margin-bottom: 48px; }
+
+  .trigger-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .trigger-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--ink);
+    background: transparent;
+  }
+
+  .trigger-table td {
+    padding: 13px 12px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .trigger-table tr:hover td { background: rgba(0,0,0,0.02); }
+
+  .tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .tag-buy { background: #e8f5ec; color: var(--green); }
+  .tag-sell { background: #fdecea; color: var(--red); }
+  .tag-hold { background: #eef2f8; color: var(--blue); }
+  .tag-watch { background: #fdf6e3; color: var(--gold); }
+
+  /* Death cross section */
+  .dc-section { margin-bottom: 48px; }
+
+  .dc-timeline {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .dc-timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--rule);
+  }
+
+  .dc-item {
+    position: relative;
+    margin-bottom: 22px;
+  }
+
+  .dc-item::before {
+    content: '';
+    position: absolute;
+    left: -21px;
+    top: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .dc-item.fake::before { background: var(--muted); box-shadow: 0 0 0 1px var(--muted); }
+
+  .dc-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .dc-desc { font-size: 13px; line-height: 1.6; }
+  .dc-result {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  .dc-result.bad { color: var(--red); }
+  .dc-result.ok { color: var(--muted); }
+
+  /* Flowchart */
+  .flow-section { margin-bottom: 48px; }
+
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-node {
+    display: flex;
+    gap: 16px;
+    position: relative;
+  }
+
+  .flow-node + .flow-node::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: -16px;
+    width: 1px;
+    height: 16px;
+    background: var(--rule);
+  }
+
+  .flow-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .icon-q { background: var(--ink); color: var(--paper); }
+  .icon-yes { background: #e8f5ec; border: 1px solid var(--green); }
+  .icon-no { background: #fdecea; border: 1px solid var(--red); }
+
+  .flow-content { padding-bottom: 24px; padding-top: 6px; }
+  .flow-q { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .flow-sub { font-size: 13px; color: var(--muted); }
+
+  /* Bottom rule */
+  .disclaimer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.8;
+    letter-spacing: 0.04em;
+  }
+
+  /* Pullquote */
+  .pullquote {
+    border-left: 3px solid var(--accent);
+    padding: 12px 20px;
+    margin: 24px 0;
+    font-style: italic;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .rule-row { grid-template-columns: 1fr; gap: 4px; }
+    .masthead { grid-template-columns: 1fr; }
+    .masthead-meta { text-align: left; }
+    .trigger-table { font-size: 12px; }
+    .trigger-table td, .trigger-table th { padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="masthead">
+    <div>
+      <div class="masthead-label">个人投资操作策略 · 中证500 + 债券配置</div>
+      <h1>Portfolio<br><em>Strategy</em></h1>
+    </div>
+    <div class="masthead-meta">
+      总仓位 ¥1,000,000<br>
+      中证500 ¥350,000<br>
+      债券基金 ¥550,000<br>
+      现金 ¥100,000<br>
+      ──────────────<br>
+      无限期持有<br>
+      风险承受：高
+    </div>
+  </div>
+
+  <!-- Current allocation -->
+  <div class="alloc-section">
+    <div class="section-label">当前配置</div>
+    <div class="alloc-bar">
+      <div class="alloc-seg seg-csi">中证500 35%</div>
+      <div class="alloc-seg seg-bond">债券基金 55%</div>
+      <div class="alloc-seg seg-cash">现金 10%</div>
+    </div>
+    <div class="alloc-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>中证500 · ¥35万 · 权益核心</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>债券基金 · ¥55万 · 弹药库 + 收益垫</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>现金 · ¥10万 · 机动</div>
+    </div>
+  </div>
+
+  <!-- Core principles -->
+  <div class="rules-grid">
+    <div class="section-label" style="grid-column:1/-1">核心原则</div>
+    <div class="rule-row">
+      <div class="rule-key">仓位上下界</div>
+      <div class="rule-val">中证500占总资产 <strong>20%–50%</strong> 之间运行。低于20%主动补仓，高于50%主动减仓转债券，绝不清仓。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-key">资金来源</div>
+      <div class="rule-val">加仓资金 <strong>只从债券基金赎回</strong>，不动现金（现金留作3–6个月生活备用）。债券仓位下限 <strong>35%</strong>，不得突破。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-key">定投节奏</div>
+      <div class="rule-val">每月固定日期定投，金额 <strong>¥3,000–¥8,000</strong>（根据行情档位上下调整），从债券基金赎回划转。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-key">择时加仓</div>
+      <div class="rule-val">触发条件满足时，额外从债券赎回 <strong>¥2–5万</strong> 加仓，单次不超过总仓位5%，每年择时操作 <strong>不超过4次</strong>。</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-key">再平衡</div>
+      <div class="rule-val">每年12月底检查配置比例，若中证500涨至 <strong>超过48%</strong>，赎回部分转债券；若跌至 <strong>低于22%</strong>，赎回债券补仓。</div>
+    </div>
+  </div>
+
+  <!-- Trigger table -->
+  <div class="trigger-section">
+    <div class="section-label">择时加仓触发条件</div>
+    <table class="trigger-table">
+      <thead>
+        <tr>
+          <th>档位</th>
+          <th>触发条件</th>
+          <th>操作</th>
+          <th>信号</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A档 · 常规</strong></td>
+          <td>无特殊信号，正常月份</td>
+          <td>月定投 ¥3,000</td>
+          <td><span class="tag tag-hold">持续</span></td>
+        </tr>
+        <tr>
+          <td><strong>B档 · 温和信号</strong></td>
+          <td>PE分位 &lt; 40%<br>近3个月跌幅 &gt; 10%<br>50日线在200日线下方</td>
+          <td>月定投加码至 ¥6,000<br>+ 额外加仓 ¥2万（触发后下月执行）</td>
+          <td><span class="tag tag-buy">加码</span></td>
+        </tr>
+        <tr>
+          <td><strong>C档 · 明确机会</strong></td>
+          <td>PE分位 &lt; 25%<br>近6个月跌幅 &gt; 20%<br>死叉且均线仍下行</td>
+          <td>月定投 ¥8,000<br>+ 额外加仓 ¥4万<br>分两次执行（间隔1个月）</td>
+          <td><span class="tag tag-buy">重点加仓</span></td>
+        </tr>
+        <tr>
+          <td><strong>D档 · 极端低估</strong></td>
+          <td>PE分位 &lt; 10%（历史极低）<br>跌幅 &gt; 35%<br>市场极度悲观</td>
+          <td>启动债券仓位上限赎回<br>额外加仓 ¥5万<br>单次最大操作</td>
+          <td><span class="tag tag-buy">重仓抄底</span></td>
+        </tr>
+        <tr>
+          <td><strong>减仓条件</strong></td>
+          <td>中证500占比 &gt; 48%<br>PE分位 &gt; 85%<br>或金叉后涨幅 &gt; 40%</td>
+          <td>赎回中证500部分<br>转入债券基金<br>恢复至40%以下</td>
+          <td><span class="tag tag-sell">减仓</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="pullquote">
+      加仓档位不需要同时满足所有条件，满足其中2项即可触发。PE分位优先级最高，是最核心的指标。
+    </div>
+  </div>
+
+  <!-- Death cross handling -->
+  <div class="dc-section">
+    <div class="section-label">死叉信号如何处理</div>
+
+    <p style="font-size:14px; margin-bottom:20px; color:var(--muted)">
+      过去10年中证500出现6次死叉，4次真、2次假。死叉不是清仓信号，而是<strong style="color:var(--ink)">提高警觉 + 加大定投</strong>的信号。
+    </p>
+
+    <div class="dc-timeline">
+      <div class="dc-item">
+        <div class="dc-date">2018年5–6月 死叉</div>
+        <div class="dc-desc">贸易战背景，PE分位低，属于C档触发，应加大定投。死叉后继续跌30%，分批加仓摊低成本。</div>
+        <div class="dc-result bad">→ 真信号 · 正确策略：分批加仓 ¥4–8万</div>
+      </div>
+      <div class="dc-item fake">
+        <div class="dc-date">2020年2月 死叉（假信号）</div>
+        <div class="dc-desc">疫情冲击，但PE分位不算低，经济逻辑完整，不满足C档条件。按B档执行即可，不大幅加仓。</div>
+        <div class="dc-result ok">→ 假信号 · 正确策略：维持月定投，不追加</div>
+      </div>
+      <div class="dc-item">
+        <div class="dc-date">2022年3–4月 死叉</div>
+        <div class="dc-desc">PE分位跌破25%，满足C档。分两批加仓，不一次押满，因为下跌可能延续（实际跌至2024年2月）。</div>
+        <div class="dc-result bad">→ 真信号 · 正确策略：C档分批加仓，留余量</div>
+      </div>
+      <div class="dc-item">
+        <div class="dc-date">2023年8–9月 死叉</div>
+        <div class="dc-desc">PE分位 &lt; 20%，叠加前期已大幅下跌，满足C–D档边界。可分3批加仓，每批间隔1个月。</div>
+        <div class="dc-result bad">→ 真信号 · 正确策略：D档加仓，买入后持有</div>
+      </div>
+    </div>
+
+    <p style="font-size:13px; margin-top:16px; color:var(--muted)">
+      核心原则：<strong style="color:var(--ink)">死叉 × PE低分位 = 加仓</strong>。死叉 × PE高分位 = 观望，不追。
+    </p>
+  </div>
+
+  <!-- Decision flow -->
+  <div class="flow-section">
+    <div class="section-label">每月决策流程（5分钟检查）</div>
+
+    <div class="flow">
+      <div class="flow-node">
+        <div class="flow-icon icon-q">①</div>
+        <div class="flow-content">
+          <div class="flow-q">查中证500 PE分位（中证官网或集思录）</div>
+          <div class="flow-sub">&lt;25% → C/D档候选 ｜ 25–40% → B档候选 ｜ &gt;40% → A档，正常定投</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-icon icon-q">②</div>
+        <div class="flow-content">
+          <div class="flow-q">查50日线 vs 200日线位置</div>
+          <div class="flow-sub">死叉（50线在下）→ 加一档信号强度 ｜ 金叉（50线在上）→ 维持当前档位</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-icon icon-q">③</div>
+        <div class="flow-content">
+          <div class="flow-q">查当前中证500占总仓比例</div>
+          <div class="flow-sub">&gt;48% → 停止加仓，考虑减仓 ｜ &lt;22% → 强制补仓至25%</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-icon icon-q">④</div>
+        <div class="flow-content">
+          <div class="flow-q">确认债券仓位 &gt; 35%</div>
+          <div class="flow-sub">若债券已低于35%，本月暂停额外加仓，只执行基础定投</div>
+        </div>
+      </div>
+      <div class="flow-node">
+        <div class="flow-icon icon-q">⑤</div>
+        <div class="flow-content">
+          <div class="flow-q">执行当月操作，记录档位和理由</div>
+          <div class="flow-sub">建议用表格记录每次操作：日期、档位、金额、PE分位、均线状态</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What NOT to do -->
+  <div class="trigger-section">
+    <div class="section-label">明确禁止的操作</div>
+    <table class="trigger-table">
+      <thead>
+        <tr><th>禁止行为</th><th>原因</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>因"感觉要跌"单次赎回 &gt;20万中证500</td>
+          <td>无法判断底部，大概率踏空反弹</td>
+        </tr>
+        <tr>
+          <td>动用现金¥10万加仓</td>
+          <td>现金是生活安全垫，不参与投资</td>
+        </tr>
+        <tr>
+          <td>死叉后立刻全部清仓</td>
+          <td>10年历史中2次假信号，清仓成本极高</td>
+        </tr>
+        <tr>
+          <td>债券跌破35%仍继续赎回加仓</td>
+          <td>打破资产配置结构，失去缓冲垫</td>
+        </tr>
+        <tr>
+          <td>一年内择时操作超过6次</td>
+          <td>频繁操作侵蚀收益，偏离定投逻辑</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    本策略为个人参考框架，不构成投资建议。市场有风险，投资需谨慎。<br>
+    建议每年12月底回顾策略有效性，根据实际情况微调档位阈值。
+  </div>
+
+</div>
+</body>
+</html>
